@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -64,5 +65,8 @@ public class ProjectCost {
 	private BigDecimal cost9 = new BigDecimal(0);
 
 	@ExcelIgnore
-	private List<Integer> monthRangeArr = new ArrayList<>();
+	private Date dateStart;
+
+	@ExcelIgnore
+	private Date dateEnd;
 }

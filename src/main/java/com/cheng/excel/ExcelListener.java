@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -63,120 +64,140 @@ public class ExcelListener extends AnalysisEventListener {
 	@Override
 	public void doAfterAllAnalysed(AnalysisContext context) {
 		if (context.readSheetHolder().getSheetNo() == 9) {
-			Map<Integer, BigDecimal> maps1 = getMonthMoneyMap(dateCosts1);
-			Map<Integer, BigDecimal> maps2 = getMonthMoneyMap(dateCosts2);
-			Map<Integer, BigDecimal> maps3 = getMonthMoneyMap(dateCosts3);
-			Map<Integer, BigDecimal> maps4 = getMonthMoneyMap(dateCosts4);
-			Map<Integer, BigDecimal> maps5 = getMonthMoneyMap(dateCosts5);
-			Map<Integer, BigDecimal> maps6 = getMonthMoneyMap(dateCosts6);
-			Map<Integer, BigDecimal> maps7 = getMonthMoneyMap(dateCosts7);
-			Map<Integer, BigDecimal> maps8 = getMonthMoneyMap(dateCosts8);
-			Map<Integer, BigDecimal> maps9 = getMonthMoneyMap(dateCosts9);
+
+			AtomicBoolean isMonth = new AtomicBoolean(false);
 
 			projectCosts.forEach(e -> {
 				String[] split = e.getDateRange().split("到");
-				int first = 0;
-				int second = 0;
 
-				boolean isDay = false;
-				if (split[0].length() > 8) {
-					isDay = true;
+				if (split[0].length() < 8) {
+					isMonth.set(true);
 				}
 
 				Date date1 = DateUtils.parseDate(split[0]);
 				Date date2 = DateUtils.parseDate(split[1]);
-				first = DateUtils.toCalendar(date1).get(Calendar.MONTH);
-				second = DateUtils.toCalendar(date2).get(Calendar.MONTH);
 
-				for (int i = 0; i < 12; i++) {
-					if (first <= second) {
-						e.getMonthRangeArr().add(first);
-					}
-					first++;
+				if (isMonth.get()) {
+					date1 = DateUtils.parseDate(DateUtils.formatDate(date1, "yyyy-MM"));
+					date2 = DateUtils.parseDate(DateUtils.formatDate(date2, "yyyy-MM"));
 				}
+
+				e.setDateStart(date1);
+				e.setDateEnd(date2);
+
 			});
-			projectCosts.forEach(e -> e.getMonthRangeArr().forEach(r -> {
-				int month = r;
-				AtomicInteger hasNumSum = new AtomicInteger(e.getPersonnelNum());
-				projectCosts.forEach(g -> {
-					if (!Objects.equals(e.getProject(), g.getProject()) && g.getMonthRangeArr().contains(r)) {
-						hasNumSum.addAndGet(g.getPersonnelNum());
+
+			Map<Date, BigDecimal> maps1 = getDateCostMap(dateCosts1, isMonth);
+			Map<Date, BigDecimal> maps2 = getDateCostMap(dateCosts2, isMonth);
+			Map<Date, BigDecimal> maps3 = getDateCostMap(dateCosts3, isMonth);
+			Map<Date, BigDecimal> maps4 = getDateCostMap(dateCosts4, isMonth);
+			Map<Date, BigDecimal> maps5 = getDateCostMap(dateCosts5, isMonth);
+			Map<Date, BigDecimal> maps6 = getDateCostMap(dateCosts6, isMonth);
+			Map<Date, BigDecimal> maps7 = getDateCostMap(dateCosts7, isMonth);
+			Map<Date, BigDecimal> maps8 = getDateCostMap(dateCosts8, isMonth);
+			Map<Date, BigDecimal> maps9 = getDateCostMap(dateCosts9, isMonth);
+
+			projectCosts.forEach(e -> {
+				Date startDate = e.getDateStart();
+				Date endate = e.getDateEnd();
+
+				for (int i = 0; i < 1000; i++) {
+					if (startDate.compareTo(endate) <= 0) {
+						System.out.println(DateUtils.formatDate(startDate) + " <= " + DateUtils.formatDate(endate));
+						AtomicInteger hasNumSum = new AtomicInteger(e.getPersonnelNum());
+						for (ProjectCost projectCost : projectCosts) {
+							if (!Objects.equals(e.getProject(), projectCost.getProject())
+									&& startDate.compareTo(projectCost.getDateStart()) >= 0
+									&& startDate.compareTo(projectCost.getDateEnd()) <= 0) {
+								hasNumSum.addAndGet(projectCost.getPersonnelNum());
+							}
+						}
+
+						BigDecimal money1 = maps1.get(startDate);
+						if (money1 != null) {
+							money1 = money1.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
+							e.setCost1(e.getCost1().add(money1));
+						}
+						BigDecimal money2 = maps2.get(startDate);
+						if (money2 != null && money2.compareTo(BigDecimal.ZERO) > 0) {
+							money2 = money2.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
+							e.setCost2(e.getCost2().add(money2));
+						}
+						BigDecimal money3 = maps3.get(startDate);
+						if (money3 != null && money3.compareTo(BigDecimal.ZERO) > 0) {
+							money3 = money3.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
+							e.setCost3(e.getCost3().add(money3));
+						}
+						BigDecimal money4 = maps4.get(startDate);
+						if (money4 != null && money4.compareTo(BigDecimal.ZERO) > 0) {
+							money4 = money4.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
+							e.setCost4(e.getCost4().add(money4));
+						}
+						BigDecimal money5 = maps5.get(startDate);
+						if (money5 != null && money5.compareTo(BigDecimal.ZERO) > 0) {
+							money5 = money5.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
+							e.setCost5(e.getCost5().add(money5));
+						}
+						BigDecimal money6 = maps6.get(startDate);
+						if (money6 != null && money6.compareTo(BigDecimal.ZERO) > 0) {
+							money6 = money6.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
+							e.setCost6(e.getCost6().add(money6));
+						}
+						BigDecimal money7 = maps7.get(startDate);
+						if (money7 != null && money7.compareTo(BigDecimal.ZERO) > 0) {
+							money7 = money7.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
+							e.setCost7(e.getCost7().add(money7));
+						}
+						BigDecimal money8 = maps8.get(startDate);
+						if (money8 != null && money8.compareTo(BigDecimal.ZERO) > 0) {
+							money8 = money8.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
+							e.setCost8(e.getCost8().add(money8));
+						}
+						BigDecimal money9 = maps9.get(startDate);
+						if (money9 != null && money9.compareTo(BigDecimal.ZERO) > 0) {
+							money9 = money9.multiply(new BigDecimal(e.getPersonnelNum()))
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
+							e.setCost9(e.getCost9().add(money9));
+						}
+						if (isMonth.get()) {
+							startDate = DateUtils.addMonths(startDate, 1);
+						} else {
+							startDate = DateUtils.addDays(startDate, 1);
+						}
 					}
-				});
-				BigDecimal money1 = maps1.get(month);
-				if (money1 != null) {
-					money1 = money1.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost1(e.getCost1().add(money1));
 				}
-				BigDecimal money2 = maps2.get(month);
-				if (money2 != null && money2.compareTo(BigDecimal.ZERO) > 0) {
-					money2 = money2.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost2(e.getCost2().add(money2));
-				}
-				BigDecimal money3 = maps3.get(month);
-				if (money3 != null && money3.compareTo(BigDecimal.ZERO) > 0) {
-					money3 = money3.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost3(e.getCost3().add(money3));
-				}
-				BigDecimal money4 = maps4.get(month);
-				if (money4 != null && money4.compareTo(BigDecimal.ZERO) > 0) {
-					money4 = money4.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost4(e.getCost4().add(money4));
-				}
-				BigDecimal money5 = maps5.get(month);
-				if (money5 != null && money5.compareTo(BigDecimal.ZERO) > 0) {
-					money5 = money5.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost5(e.getCost5().add(money5));
-				}
-				BigDecimal money6 = maps6.get(month);
-				if (money6 != null && money6.compareTo(BigDecimal.ZERO) > 0) {
-					money6 = money6.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost6(e.getCost6().add(money6));
-				}
-				BigDecimal money7 = maps7.get(month);
-				if (money7 != null && money7.compareTo(BigDecimal.ZERO) > 0) {
-					money7 = money7.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost7(e.getCost7().add(money7));
-				}
-				BigDecimal money8 = maps8.get(month);
-				if (money8 != null && money8.compareTo(BigDecimal.ZERO) > 0) {
-					money8 = money8.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost8(e.getCost8().add(money8));
-				}
-				BigDecimal money9 = maps9.get(month);
-				if (money9 != null && money9.compareTo(BigDecimal.ZERO) > 0) {
-					money9 = money9.multiply(new BigDecimal(e.getPersonnelNum()))
-							.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
-					e.setCost9(e.getCost9().add(money9));
-				}
-			}));
+
+			});
+
 			projectCosts.forEach(System.out::println);
 			writerExcle(projectCosts);
 		}
 	}
 
 	@NotNull
-	private Map<Integer, BigDecimal> getMonthMoneyMap(List<DateCost> dateCosts) {
-		Map<Integer, BigDecimal> maps = new HashMap<>(50);
+	private Map<Date, BigDecimal> getDateCostMap(List<DateCost> dateCosts, AtomicBoolean isMonth) {
+		Map<Date, BigDecimal> maps = new HashMap<>(50);
 		dateCosts.forEach(e -> {
 			Date costDate = DateUtils.parseDate(e.getCostDate());
-			int month = DateUtils.toCalendar(costDate).get(Calendar.MONTH);
-			BigDecimal count = maps.get(month);
+			if (isMonth.get()) {
+				costDate = DateUtils.parseDate(DateUtils.formatDate(costDate, "yyyy-MM"));
+			}
+			BigDecimal count = maps.get(costDate);
 			if (count == null) {
-				maps.put(month, e.getCost());
+				maps.put(costDate, e.getCost());
 			} else {
-				maps.put(month, e.getCost().add(count));
+				maps.put(costDate, e.getCost().add(count));
 			}
 		});
-		System.out.println(maps.values());
+		maps.forEach((k, v) -> System.out.println(DateUtils.formatDate(k) + " = " + v));
 		return maps;
 	}
 
