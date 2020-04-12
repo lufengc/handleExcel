@@ -24,15 +24,15 @@ public class HandleExcel {
 	public static String inPath = "exec/src.xls";
 	public static String outPath = "exec/result.xls";
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 		//		if (args.length < 2) {
 		//			log.error("缺少文件路径参数");
 		//			return;
 		//		}
-
+		//
 		//		log.info("args[] = {}, {}", args[0], args[1]);
-
-		//		String inPath = args[0];
+		//
+		//		inPath = args[0];
 		//		outPath = args[1];
 
 		ExcelReader excelReader = EasyExcel.read(inPath).build();

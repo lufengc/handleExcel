@@ -185,7 +185,7 @@ public class ExcelListener extends AnalysisEventListener {
 	@NotNull
 	private Map<Date, BigDecimal> getDateCostMap(List<DateCost> dateCosts, AtomicBoolean isMonth) {
 		Map<Date, BigDecimal> maps = new HashMap<>(50);
-		dateCosts.forEach(e -> {
+		dateCosts.stream().filter(e -> e.getCost() != null && e.getCostDate() != null).forEach(e -> {
 			Date costDate = DateUtils.parseDate(e.getCostDate());
 			if (isMonth.get()) {
 				costDate = DateUtils.parseDate(DateUtils.formatDate(costDate, "yyyy-MM"));
