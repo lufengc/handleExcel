@@ -21,8 +21,8 @@ import java.io.IOException;
 @SpringBootApplication
 public class HandleExcel {
 
-	public static String inPath = "lib/src.xls";
-	public static String outPath = "lib/result.xls";
+	public static String inPath = "exec/src.xls";
+	public static String outPath = "exec/result.xls";
 
 	public static void main(String[] args) throws IOException {
 		//		if (args.length < 2) {

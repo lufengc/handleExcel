@@ -24,7 +24,7 @@ import java.util.List;
 @ColumnWidth(15)
 public class ProjectCost {
 
-	@ExcelProperty(value = "编号")
+	@ExcelProperty(value = "序号")
 	private String no;
 
 	@ExcelProperty(value = "项目名称")

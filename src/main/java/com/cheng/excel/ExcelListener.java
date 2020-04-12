@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
-import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -78,14 +77,17 @@ public class ExcelListener extends AnalysisEventListener {
 				String[] split = e.getDateRange().split("到");
 				int first = 0;
 				int second = 0;
-				try {
-					Date date1 = DateUtils.parseDate(split[0], "yyyy-MM");
-					Date date2 = DateUtils.parseDate(split[1], "yyyy-MM");
-					first = DateUtils.toCalendar(date1).get(Calendar.MONTH);
-					second = DateUtils.toCalendar(date2).get(Calendar.MONTH);
-				} catch (ParseException ex) {
-					ex.printStackTrace();
+
+				boolean isDay = false;
+				if (split[0].length() > 8) {
+					isDay = true;
 				}
+
+				Date date1 = DateUtils.parseDate(split[0]);
+				Date date2 = DateUtils.parseDate(split[1]);
+				first = DateUtils.toCalendar(date1).get(Calendar.MONTH);
+				second = DateUtils.toCalendar(date2).get(Calendar.MONTH);
+
 				for (int i = 0; i < 12; i++) {
 					if (first <= second) {
 						e.getMonthRangeArr().add(first);
@@ -165,12 +167,13 @@ public class ExcelListener extends AnalysisEventListener {
 	private Map<Integer, BigDecimal> getMonthMoneyMap(List<DateCost> dateCosts) {
 		Map<Integer, BigDecimal> maps = new HashMap<>(50);
 		dateCosts.forEach(e -> {
-			int month = DateUtils.toCalendar(e.getMonth()).get(Calendar.MONTH);
+			Date costDate = DateUtils.parseDate(e.getCostDate());
+			int month = DateUtils.toCalendar(costDate).get(Calendar.MONTH);
 			BigDecimal count = maps.get(month);
 			if (count == null) {
-				maps.put(month, new BigDecimal(e.getAmount()));
+				maps.put(month, e.getCost());
 			} else {
-				maps.put(month, new BigDecimal(e.getAmount()).add(count));
+				maps.put(month, e.getCost().add(count));
 			}
 		});
 		System.out.println(maps.values());

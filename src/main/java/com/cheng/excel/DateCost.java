@@ -9,6 +9,7 @@ import com.alibaba.excel.metadata.BaseRowModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -23,11 +24,11 @@ public class DateCost {
 	 * 日期
 	 */
 	@ExcelProperty
-	private Date month;
+	private String costDate;
 
 	/**
 	 * 金额
 	 */
 	@ExcelProperty
-	private String amount;
+	private BigDecimal cost;
 }
