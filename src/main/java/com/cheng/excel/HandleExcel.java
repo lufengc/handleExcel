@@ -10,8 +10,6 @@ import com.alibaba.excel.read.metadata.ReadSheet;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.io.IOException;
-
 /**
  *
  * @author fengcheng
@@ -21,19 +19,19 @@ import java.io.IOException;
 @SpringBootApplication
 public class HandleExcel {
 
-	public static String inPath = "exec/src.xls";
-	public static String outPath = "exec/result.xls";
+	public static String inPath = "exec/src.xlsx";
+	public static String outPath = "exec/result.xlsx";
 
 	public static void main(String[] args) {
-		//		if (args.length < 2) {
-		//			log.error("缺少文件路径参数");
-		//			return;
-		//		}
-		//
-		//		log.info("args[] = {}, {}", args[0], args[1]);
-		//
-		//		inPath = args[0];
-		//		outPath = args[1];
+		if (args.length < 2) {
+			log.error("缺少文件路径参数");
+			return;
+		}
+
+		log.info("args[] = {}, {}", args[0], args[1]);
+
+		inPath = args[0];
+		outPath = args[1];
 
 		ExcelReader excelReader = EasyExcel.read(inPath).build();
 		ReadSheet readSheet1 = EasyExcel.readSheet(0).head(ProjectCost.class).registerReadListener(new ExcelListener())

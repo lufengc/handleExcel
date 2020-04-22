@@ -152,7 +152,7 @@ public class ExcelListener extends AnalysisEventListener {
 						BigDecimal money7 = maps7.get(startDate);
 						if (money7 != null && money7.compareTo(BigDecimal.ZERO) > 0) {
 							money7 = money7.multiply(new BigDecimal(e.getPersonnelNum()))
-									.divide(new BigDecimal(hasNumSum.get()), 2, BigDecimal.ROUND_HALF_UP);
+									.divide(new BigDecimal(hasNumSum.get()), 4, BigDecimal.ROUND_HALF_UP);
 							e.setCost7(e.getCost7().add(money7));
 						}
 						BigDecimal money8 = maps8.get(startDate);
