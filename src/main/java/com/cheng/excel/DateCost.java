@@ -5,9 +5,7 @@
 package com.cheng.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.metadata.BaseRowModel;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -24,7 +22,13 @@ public class DateCost {
 	 * 日期
 	 */
 	@ExcelProperty
-	private String costDate;
+	private Date costDate;
+
+	/**
+	 * 分类
+	 */
+	@ExcelProperty
+	private String category;
 
 	/**
 	 * 金额

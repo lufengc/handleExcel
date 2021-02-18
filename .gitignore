@@ -16,3 +16,4 @@ logs/
 *.ipr
 exec/jre/
 exec/jre.zip
+exec/handleExcel.jar
