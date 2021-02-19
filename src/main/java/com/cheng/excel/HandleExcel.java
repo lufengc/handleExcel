@@ -22,18 +22,19 @@ public class HandleExcel {
 	public static String inPath = "exec/src.xlsx";
 	public static String outPath = "exec/result.xlsx";
 	public static String outPath1 = "exec/process.xlsx";
+	public static String mode = "y";
 
 	public static void main(String[] args) {
 		if (args.length < 3) {
 			log.error("缺少文件路径参数");
 			return;
 		}
-
-		log.info("args[] = {}, {}, {}", args[0], args[1], args[2]);
-
 		inPath = args[0];
 		outPath = args[1];
 		outPath1 = args[2];
+		if (args.length == 4) {
+			mode = args[3];
+		}
 
 		ExcelReader excelReader = EasyExcel.read(inPath).build();
 		ReadSheet readSheet1 = EasyExcel.readSheet(0).head(ProjectCost.class).registerReadListener(new ExcelListener())

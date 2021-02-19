@@ -53,11 +53,15 @@ public class ExcelListener extends AnalysisEventListener {
 				list.add(DateUtils.formatDate(dateCost.getCostDate(), "yyyy-MM-dd"));
 				list.add(dateCost.getCategory());
 				list.add(dateCost.getCost());
-				dateCost.setCostDate(DateUtils.truncate(dateCost.getCostDate(), Calendar.MONTH));
+				if ("y".equals(HandleExcel.mode)) {
+					dateCost.setCostDate(DateUtils.truncate(dateCost.getCostDate(), Calendar.MONTH));
+				}
 				for (int i = 0; i < projectCosts.size(); i++) {
 					ProjectCost projectCost = projectCosts.get(i);
-					projectCost.setStartDate(DateUtils.truncate(projectCost.getStartDate(), Calendar.MONTH));
-					projectCost.setEndDate(DateUtils.truncate(projectCost.getEndDate(), Calendar.MONTH));
+					if ("y".equals(HandleExcel.mode)) {
+						projectCost.setStartDate(DateUtils.truncate(projectCost.getStartDate(), Calendar.MONTH));
+						projectCost.setEndDate(DateUtils.truncate(projectCost.getEndDate(), Calendar.MONTH));
+					}
 					Map<String, BigDecimal> key = categorySum.get(projectCost.getProject());
 					BigDecimal cast = key.get(dateCost.getCategory());
 					BigDecimal allot = BigDecimal.ZERO;
@@ -65,6 +69,10 @@ public class ExcelListener extends AnalysisEventListener {
 							&& dateCost.getCostDate().compareTo(projectCost.getEndDate()) <= 0) {
 						AtomicInteger hasNumSum = new AtomicInteger(projectCost.getPersonnelNum());
 						projectCosts.forEach(g -> {
+							if ("y".equals(HandleExcel.mode)) {
+								g.setStartDate(DateUtils.truncate(g.getStartDate(), Calendar.MONTH));
+								g.setEndDate(DateUtils.truncate(g.getEndDate(), Calendar.MONTH));
+							}
 							if (!projectCost.getProject().equals(g.getProject())) {
 								if (dateCost.getCostDate().compareTo(g.getStartDate()) >= 0
 										&& dateCost.getCostDate().compareTo(g.getEndDate()) <= 0) {
@@ -169,16 +177,18 @@ public class ExcelListener extends AnalysisEventListener {
 		headTitle.add("人数");
 		headList.add(headTitle);
 
+		int categoryCount = 1;
 		String anyKey = categorySum.keySet().stream().findAny().orElse(null);
 		for (String key : categorySum.get(anyKey).keySet()) {
 			headTitle = new ArrayList<>();
 			headTitle.add("分配结果");
 			headTitle.add(key);
 			headList.add(headTitle);
+			categoryCount++;
 		}
 
 		headTitle = new ArrayList<>();
-		headTitle.add("分配结果");
+		headTitle.add("合计");
 		headTitle.add("合计");
 		headList.add(headTitle);
 
@@ -198,6 +208,26 @@ public class ExcelListener extends AnalysisEventListener {
 			data.add(sum);
 			datas.add(data);
 		}
+		// 最后一行的合计
+		List<Object> data = new ArrayList<>();
+		data.add("合计");
+		data.add(null);
+		data.add(null);
+		data.add(null);
+		data.add(null);
+
+		List<List<Object>> currentDatas = new ArrayList<>(datas);
+		int startColumn = 5;
+		for (int i = 0; i < categoryCount; i++) {
+			BigDecimal columnSum = BigDecimal.ZERO;
+			for (List<Object> objects : currentDatas) {
+				columnSum = columnSum.add(new BigDecimal(objects.get(startColumn).toString()));
+			}
+			data.add(columnSum);
+			startColumn++;
+		}
+		datas.add(data);
+
 		EasyExcel.write(HandleExcel.outPath)
 				// sheet
 				.sheet("分配结果")
