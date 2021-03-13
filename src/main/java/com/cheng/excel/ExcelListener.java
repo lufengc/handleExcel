@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
@@ -68,6 +69,8 @@ public class ExcelListener extends AnalysisEventListener {
 					if (dateCost.getCostDate().compareTo(projectCost.getStartDate()) >= 0
 							&& dateCost.getCostDate().compareTo(projectCost.getEndDate()) <= 0) {
 						AtomicInteger hasNumSum = new AtomicInteger(projectCost.getPersonnelNum());
+						long currentDays = projectCost.getEndDate().getTime() - projectCost.getStartDate().getTime();
+						AtomicLong hasDaysSum = new AtomicLong(currentDays);
 						projectCosts.forEach(g -> {
 							if ("y".equals(HandleExcel.mode)) {
 								g.setStartDate(DateUtils.truncate(g.getStartDate(), Calendar.MONTH));
@@ -76,14 +79,19 @@ public class ExcelListener extends AnalysisEventListener {
 							if (!projectCost.getProject().equals(g.getProject())) {
 								if (dateCost.getCostDate().compareTo(g.getStartDate()) >= 0
 										&& dateCost.getCostDate().compareTo(g.getEndDate()) <= 0) {
+									hasDaysSum.addAndGet(g.getEndDate().getTime() - g.getStartDate().getTime());
 									hasNumSum.addAndGet(g.getPersonnelNum());
 								}
 							}
 						});
 						BigDecimal rate = new BigDecimal(projectCost.getPersonnelNum())
-								.divide(new BigDecimal(hasNumSum.get()), 8, BigDecimal.ROUND_HALF_UP);
-						list.add(rate);
-						allot = dateCost.getCost().multiply(rate);
+								.divide(new BigDecimal(hasNumSum.get()), 8, BigDecimal.ROUND_HALF_UP)
+								.multiply(new BigDecimal("0.5"));
+						BigDecimal daysRate = new BigDecimal(currentDays)
+								.divide(new BigDecimal(hasDaysSum.get()), 8, BigDecimal.ROUND_HALF_UP)
+								.multiply(new BigDecimal("0.5"));
+						list.add(rate.add(daysRate));
+						allot = dateCost.getCost().multiply(rate.add(daysRate));
 						list.add(allot);
 						allotMoneyList.set(i, allotMoneyList.get(i).add(allot));
 					} else {
