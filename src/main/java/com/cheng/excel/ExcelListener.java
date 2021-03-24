@@ -36,6 +36,13 @@ public class ExcelListener extends AnalysisEventListener {
 		}
 	}
 
+	public static int getDaysOfMonth(Date date) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(date);
+		return calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+	}
+
+
 	@Override
 	public void doAfterAllAnalysed(AnalysisContext context) {
 		if (context.readSheetHolder().getSheetNo() == 1) {
@@ -43,55 +50,92 @@ public class ExcelListener extends AnalysisEventListener {
 			Map<String, Map<String, BigDecimal>> categorySum = new HashMap<>(dateCosts.size());
 			List<BigDecimal> allotMoneyList = new ArrayList<>();
 			projectCosts.forEach(e -> {
+				e.setStartDateInit(e.getStartDate());
+				e.setEndDateInit(e.getEndDate());
+				if ("y".equals(HandleExcel.mode)) {
+					e.setStartDate(DateUtils.truncate(e.getStartDate(), Calendar.MONTH));
+					e.setEndDate(DateUtils.truncate(e.getEndDate(), Calendar.MONTH));
+				}
 				allotMoneyList.add(BigDecimal.ZERO);
 				categorySum.put(e.getProject(), new HashMap<>());
+			});
+			dateCosts.forEach(dateCost -> {
+				dateCost.setCostDateInit(dateCost.getCostDate());
+				if ("y".equals(HandleExcel.mode)) {
+					dateCost.setCostDate(DateUtils.truncate(dateCost.getCostDate(), Calendar.MONTH));
+				}
 			});
 			List<List<Object>> sumList = new ArrayList<>();
 			dateCosts.sort(Comparator.comparing(DateCost::getCostDate));
 			for (DateCost dateCost : dateCosts) {
 				costSum = costSum.add(dateCost.getCost());
 				List<Object> list = new ArrayList<>();
-				list.add(DateUtils.formatDate(dateCost.getCostDate(), "yyyy-MM-dd"));
+				list.add(DateUtils.formatDate(dateCost.getCostDateInit(), "yyyy-MM-dd"));
 				list.add(dateCost.getCategory());
 				list.add(dateCost.getCost());
-				if ("y".equals(HandleExcel.mode)) {
-					dateCost.setCostDate(DateUtils.truncate(dateCost.getCostDate(), Calendar.MONTH));
-				}
 				for (int i = 0; i < projectCosts.size(); i++) {
 					ProjectCost projectCost = projectCosts.get(i);
-					if ("y".equals(HandleExcel.mode)) {
-						projectCost.setStartDate(DateUtils.truncate(projectCost.getStartDate(), Calendar.MONTH));
-						projectCost.setEndDate(DateUtils.truncate(projectCost.getEndDate(), Calendar.MONTH));
-					}
 					Map<String, BigDecimal> key = categorySum.get(projectCost.getProject());
 					BigDecimal cast = key.get(dateCost.getCategory());
 					BigDecimal allot = BigDecimal.ZERO;
 					if (dateCost.getCostDate().compareTo(projectCost.getStartDate()) >= 0
 							&& dateCost.getCostDate().compareTo(projectCost.getEndDate()) <= 0) {
 						AtomicInteger hasNumSum = new AtomicInteger(projectCost.getPersonnelNum());
-						long currentDays = projectCost.getEndDate().getTime() - projectCost.getStartDate().getTime();
-						AtomicLong hasDaysSum = new AtomicLong(currentDays);
-						projectCosts.forEach(g -> {
-							if ("y".equals(HandleExcel.mode)) {
-								g.setStartDate(DateUtils.truncate(g.getStartDate(), Calendar.MONTH));
-								g.setEndDate(DateUtils.truncate(g.getEndDate(), Calendar.MONTH));
+						long daysOfMonth = getDaysOfMonth(dateCost.getCostDate());
+						if (dateCost.getCostDate().getTime() - projectCost.getStartDate().getTime() == 0) {
+							long distanceOfTwoDate = DateUtils
+									.getDistanceOfTwoDate(projectCost.getStartDateInit(), dateCost.getCostDate());
+							distanceOfTwoDate = distanceOfTwoDate + daysOfMonth;
+							if (distanceOfTwoDate >= 0) {
+								daysOfMonth = distanceOfTwoDate;
 							}
-							if (!projectCost.getProject().equals(g.getProject())) {
-								if (dateCost.getCostDate().compareTo(g.getStartDate()) >= 0
-										&& dateCost.getCostDate().compareTo(g.getEndDate()) <= 0) {
-									hasDaysSum.addAndGet(g.getEndDate().getTime() - g.getStartDate().getTime());
-									hasNumSum.addAndGet(g.getPersonnelNum());
+						}
+						if (dateCost.getCostDate().getTime() - projectCost.getEndDate().getTime() == 0) {
+							long distanceOfTwoDate = DateUtils
+									.getDistanceOfTwoDate(dateCost.getCostDate(), projectCost.getEndDateInit());
+							if (distanceOfTwoDate >= 0) {
+								daysOfMonth = distanceOfTwoDate + 1;
+							}
+						}
+						AtomicLong hasDaysSum = new AtomicLong(daysOfMonth);
+						for (int j = 0; j < projectCosts.size(); j++) {
+							ProjectCost projectCostTemp = projectCosts.get(j);
+							if (!projectCost.getProject().equals(projectCostTemp.getProject())) {
+								if (dateCost.getCostDate().compareTo(projectCostTemp.getStartDate()) >= 0
+										&& dateCost.getCostDate().compareTo(projectCostTemp.getEndDate()) <= 0) {
+									hasNumSum.addAndGet(projectCostTemp.getPersonnelNum());
+									long daysOfMonthTemp = getDaysOfMonth(dateCost.getCostDate());
+									if (dateCost.getCostDate().getTime() - projectCostTemp.getStartDate().getTime()
+											== 0) {
+										long distanceOfTwoDate = DateUtils
+												.getDistanceOfTwoDate(projectCostTemp.getStartDateInit(),
+														dateCost.getCostDate());
+										distanceOfTwoDate = distanceOfTwoDate + daysOfMonthTemp;
+										if (distanceOfTwoDate >= 0) {
+											daysOfMonthTemp = distanceOfTwoDate;
+										}
+									}
+									if (dateCost.getCostDate().getTime() - projectCostTemp.getEndDate().getTime()
+											== 0) {
+										long distanceOfTwoDate = DateUtils.getDistanceOfTwoDate(dateCost.getCostDate(),
+												projectCostTemp.getEndDateInit());
+										if (distanceOfTwoDate >= 0) {
+											daysOfMonthTemp = distanceOfTwoDate + 1;
+										}
+									}
+									hasDaysSum.addAndGet(daysOfMonthTemp);
 								}
 							}
-						});
+						}
 						BigDecimal rate = new BigDecimal(projectCost.getPersonnelNum())
 								.divide(new BigDecimal(hasNumSum.get()), 8, BigDecimal.ROUND_HALF_UP)
 								.multiply(new BigDecimal("0.5"));
-						BigDecimal daysRate = new BigDecimal(currentDays)
+						BigDecimal daysRate = new BigDecimal(daysOfMonth)
 								.divide(new BigDecimal(hasDaysSum.get()), 8, BigDecimal.ROUND_HALF_UP)
 								.multiply(new BigDecimal("0.5"));
-						list.add(rate.add(daysRate));
-						allot = dateCost.getCost().multiply(rate.add(daysRate));
+						BigDecimal add = rate.add(daysRate);
+						list.add(add);
+						allot = dateCost.getCost().multiply(add);
 						list.add(allot);
 						allotMoneyList.set(i, allotMoneyList.get(i).add(allot));
 					} else {

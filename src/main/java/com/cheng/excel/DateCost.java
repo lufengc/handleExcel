@@ -35,4 +35,6 @@ public class DateCost {
 	 */
 	@ExcelProperty
 	private BigDecimal cost;
+
+	private Date costDateInit;
 }

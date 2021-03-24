@@ -34,4 +34,8 @@ public class ProjectCost {
 	@ExcelProperty(value = "人数")
 	private Integer personnelNum;
 
+	private Date startDateInit;
+
+	private Date endDateInit;
+
 }
