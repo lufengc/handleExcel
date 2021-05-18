@@ -71,6 +71,8 @@ public class ExcelListener extends AnalysisEventListener {
 				costSum = costSum.add(dateCost.getCost());
 				List<Object> list = new ArrayList<>();
 				list.add(DateUtils.formatDate(dateCost.getCostDateInit(), "yyyy-MM-dd"));
+				list.add(dateCost.getNo());
+				list.add(dateCost.getSummary());
 				list.add(dateCost.getCategory());
 				list.add(dateCost.getCost());
 				for (int i = 0; i < projectCosts.size(); i++) {
@@ -154,6 +156,8 @@ public class ExcelListener extends AnalysisEventListener {
 			List<Object> list = new ArrayList<>();
 			list.add("合计");
 			list.add(null);
+			list.add(null);
+			list.add(null);
 			list.add(costSum);
 			allotMoneyList.forEach(e -> {
 				list.add(null);
@@ -172,6 +176,16 @@ public class ExcelListener extends AnalysisEventListener {
 		List<String> headTitle = new ArrayList<>();
 		headTitle.add("日期");
 		headTitle.add("日期");
+		headList.add(headTitle);
+
+		headTitle = new ArrayList<>();
+		headTitle.add("凭证号");
+		headTitle.add("凭证号");
+		headList.add(headTitle);
+
+		headTitle = new ArrayList<>();
+		headTitle.add("摘要");
+		headTitle.add("摘要");
 		headList.add(headTitle);
 
 		headTitle = new ArrayList<>();

@@ -28,6 +28,16 @@ public class DateCost {
 	 * 分类
 	 */
 	@ExcelProperty
+	private String no;
+	/**
+	 * 分类
+	 */
+	@ExcelProperty
+	private String summary;
+	/**
+	 * 分类
+	 */
+	@ExcelProperty
 	private String category;
 
 	/**
